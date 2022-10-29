@@ -4,7 +4,7 @@ require("file")
 
 io.stdout:setvbuf("no")
 
-framespeed = 24 -- fps
+framespeed = 12 -- fps
 
 -- blankspeed = 2 -- speedup during blank lines
 blanktime = 50 -- duration of blank step (pixels)
@@ -51,7 +51,8 @@ function love.load()
 
 	love.graphics.setLineJoin("none")
 
-	frames[1] = newFrame()
+	-- frames[1] = newFrame()
+	file.loadLast()
 end
 
 function love.update(dt)
@@ -176,6 +177,8 @@ function love.keypressed(key, isrepeat)
 		connect = not connect
 	elseif key == "e" then
 		mode = "draw"
+	elseif key == "n" and love.keyboard.isDown("lctrl") then
+		file.new()
 	elseif key == "n" then
 		currentFrame = currentFrame + 1
 		table.insert(frames, currentFrame, newFrame())
@@ -202,6 +205,10 @@ function love.keypressed(key, isrepeat)
 	elseif key == "s" then
 		laser.tracespeed = laser.tracespeed / 1.5
 	end
+end
+
+function love.filedropped(f)
+	file.load(f)
 end
 
 function love.mousepressed(x, y, button, istouch)
