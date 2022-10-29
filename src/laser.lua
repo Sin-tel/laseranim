@@ -24,7 +24,7 @@ function laser.draw(fr)
 
 	love.graphics.setLineWidth(laser.width)
 
-	local length = calculateLength()
+	local length = calculateLength(currentFrame)
 
 	for i = 1, laser.iterations do
 		local prevx, prevy = laser.x, laser.y
@@ -32,7 +32,7 @@ function laser.draw(fr)
 		laser.t = laser.t + speed * dt
 		laser.t = laser.t % 1
 
-		local gx, gy, alpha = trace(laser.t * length)
+		local gx, gy, alpha = trace(currentFrame, laser.t * length)
 
 		if frameblanktimer > 0 then
 			frameblanktimer = frameblanktimer - dt

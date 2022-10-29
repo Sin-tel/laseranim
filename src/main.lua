@@ -131,7 +131,7 @@ function love.draw()
 		-- 	love.graphics.circle("line", p[1], p[2], 5)
 		-- end
 
-		-- local tx, ty = trace(calculateLength() * (mouseX - cx) / drawsize)
+		-- local tx, ty = trace(currentFrame, calculateLength(currentFrame) * (mouseX - cx) / drawsize)
 
 		-- love.graphics.setColor(0, 1, 1)
 		-- love.graphics.circle("line", tx, ty, 7)
@@ -156,7 +156,7 @@ function love.draw()
 	love.graphics.setColor(1, 1, 1)
 	local s = 20
 	love.graphics.print("fps:\t" .. love.timer.getFPS(), 0, 0)
-	love.graphics.print("length:\t" .. roundTo(calculateLength(), 2), 0, s)
+	love.graphics.print("length:\t" .. roundTo(calculateLength(currentFrame), 2), 0, s)
 	love.graphics.print("trace speed:\t" .. roundTo(laser.tracespeed, 2), 0, 2 * s)
 	love.graphics.print("frame:\t" .. currentFrame .. "/" .. #frames, 0, 3 * s)
 
@@ -229,12 +229,12 @@ function love.mousereleased(x, y, button, istouch, presses)
 	drawing = false
 end
 
-function calculateLength()
+function calculateLength(index)
 	local l = 0
-	local npoints = #frames[currentFrame].points
+	local npoints = #frames[index].points
 	for i = 1, npoints do
-		v1 = frames[currentFrame].points[i]
-		v2 = frames[currentFrame].points[i % npoints + 1]
+		v1 = frames[index].points[i]
+		v2 = frames[index].points[i % npoints + 1]
 
 		if v1[3] == 0 and not (connect and i == npoints) then
 			-- l = l + dist(v1[1], v1[2], v2[1], v2[2]) / blankspeed
@@ -262,20 +262,20 @@ end
 
 prev_i = 0
 prev_l = 0
-function trace(search)
-	if #frames[currentFrame].points == 0 then
-		return 0.5, 0.5, 0
-	end
+function trace(index, search)
+	-- if #frames[index].points == 0 then
+	-- 	return 0.5, 0.5, 0
+	-- end
 	local n_iter = 0
 
 	local l = prev_l
-	local npoints = #frames[currentFrame].points
+	local npoints = #frames[index].points
 
 	-- print("==========")
 
 	for i = 0, npoints - 1 do
-		v1 = frames[currentFrame].points[(prev_i + i) % npoints + 1]
-		v2 = frames[currentFrame].points[(prev_i + i + 1) % npoints + 1]
+		v1 = frames[index].points[(prev_i + i) % npoints + 1]
+		v2 = frames[index].points[(prev_i + i + 1) % npoints + 1]
 
 		if (prev_i + i) % npoints == 0 then
 			l = 0
@@ -299,6 +299,7 @@ function trace(search)
 
 		n_iter = n_iter + 1
 		if l > search and lPrev < search then
+			print("i: " .. n_iter)
 			local alpha = (search - lPrev) / d
 
 			prev_i = (prev_i + i) % npoints

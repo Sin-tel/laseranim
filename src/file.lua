@@ -15,14 +15,15 @@ function file.export()
 	love.graphics.setCanvas()
 	local outData = outCanvas:newImageData()
 
-	for i = 0, file.xres - 1 do
-		outData:setPixel(i, 0, 0, 0, 0, 1)
+	for iframe, frame in ipairs(frames) do
+		local length = calculateLength(iframe)
+		for i = 0, file.xres - 1 do
+			local t = (i + 0.5) / file.xres
+			print(t)
+			local gx, gy, alpha = trace(iframe, t * length)
+			outData:setPixel(i, iframe - 1, gx / drawsize, gy / drawsize, alpha, 1)
+		end
 	end
-	outData:setPixel(0, 0, 1, 1, 1, 1)
-	outData:setPixel(2, 0, 1, 0, 0, 1)
-	outData:setPixel(4, 0, 0, 1, 0, 1)
-	outData:setPixel(6, 0, 0, 0, 1, 1)
-	outData:setPixel(8, 0, 0.5, 0.5, 0.5, 1.0)
 
 	--- save to disk
 
