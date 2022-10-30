@@ -20,7 +20,7 @@ function file.export()
 		for i = 0, file.xres - 1 do
 			local t = (i + 0.5) / file.xres
 			local gx, gy, alpha = trace(iframe, t * length)
-			outData:setPixel(i, iframe - 1, gx / drawsize, gy / drawsize, alpha, 1)
+			outData:setPixel(i, iframe - 1, gx / canvasx, gy / canvasy, alpha, 1)
 		end
 	end
 
@@ -52,6 +52,8 @@ function file.load(f)
 		f:open("r")
 		local data = f:read()
 		frames = binser.deserialize(data)[1]
+
+		currentFrame = 1
 	elseif file.getExtension(f) == ".png" then
 		-- todo also read textures
 	end
@@ -60,7 +62,7 @@ end
 function file.new()
 	currentFrame = 1
 	frames = {}
-	for i = 1, 10 do
+	for i = 1, 1 do
 		frames[i] = newFrame()
 	end
 end

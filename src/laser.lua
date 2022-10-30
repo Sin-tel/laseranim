@@ -3,7 +3,7 @@ laser = {}
 laser.width = 3.0
 laser.color = { 1.0, 0.3, 0.3 }
 
-laser.movespeed = 20000 -- tau timeconstant
+laser.movespeed = 30000 -- tau timeconstant
 laser.iterations = 5000 -- steps per frame in simulation
 laser.tracespeed = 50 -- full laser draws per second
 -------------

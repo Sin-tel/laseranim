@@ -10,10 +10,14 @@ Animations are exported into an RGB texture and loaded into a TouchDesigner patc
  * ctrl + S: Save and export
 
 ### Editing
+ * ctrl + X/C/V: Cut/copy/paste whole frame
+ * Delete: Delete frame 
+
  * A/D: Move between frames
  * W/S: Increase/decrease laser tracing speed
  * E/Q: Increase/decrease fps
- * Space: Toggle animation play (in preview mode)
+
+ * Space: Play/pause animation in preview mode
  * P: Toggle laser preview mode
  * N: Insert frame
  * X: Clear frame

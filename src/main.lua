@@ -14,11 +14,16 @@ frameblank = 0.002 -- duration of blank between frames (seconds)
 width = 1280
 height = 800
 
--- drawing canvas size
-drawsize = 700
+aspectRatio = 21 / 9
 
-cx = (height - drawsize) / 2
+-- drawing canvas size
+canvasx = 1200
+canvasy = canvasx / aspectRatio
+
+cx = (width - canvasx) / 2
 cy = cx
+-- cx = 32
+-- cy = 32
 
 pmouseX, pmouseY = 0, 0
 mouseX, mouseY = 0, 0
@@ -29,7 +34,7 @@ playing = true
 preview = false
 connect = false
 
-mode = "draw"
+tool = "brush"
 
 currentFrame = 1
 
@@ -38,14 +43,14 @@ frameblanktimer = 0
 
 onionSkinning = 1
 
-love.window.setMode(width, height, { vsync = true })
+love.window.setMode(width, height, { vsync = true, resizable = true })
 --love.window.setMode(width, height, { vsync = true, fullscreen = false, fullscreentype = "desktop", borderless = false, resizable = true } )
 
-lasercanvas = love.graphics.newCanvas(drawsize, drawsize)
+lasercanvas = love.graphics.newCanvas(canvasx, canvasy)
 
 function love.load()
 	math.randomseed(os.time())
-	local font = love.graphics.newFont(17)
+	local font = love.graphics.newFont("res/sono_light.ttf", 16)
 	love.graphics.setFont(font)
 
 	love.graphics.setLineWidth(1.0)
@@ -99,23 +104,24 @@ function love.draw()
 
 	if preview then
 		love.graphics.setColor(0, 0, 0, 0.6)
-		love.graphics.rectangle("fill", 0, 0, drawsize, drawsize)
+		love.graphics.rectangle("fill", 0, 0, canvasx, canvasy)
 		love.graphics.setBlendMode("add")
 		-- laser stuff here
 
-		laser.draw((mouseX - cx) / drawsize)
+		laser.draw()
 
 		love.graphics.setBlendMode("alpha")
 	else
 		love.graphics.setColor(0, 0, 0, 1)
-		love.graphics.rectangle("fill", 0, 0, drawsize, drawsize)
+		love.graphics.rectangle("fill", 0, 0, canvasx, canvasy)
 
 		-- grid
 		love.graphics.setLineWidth(1.0)
-		love.graphics.setColor(0, 0.3, 0)
-		love.graphics.line(drawsize / 2, 0, drawsize / 2, drawsize)
-		love.graphics.setColor(0.3, 0, 0)
-		love.graphics.line(0, drawsize / 2, drawsize, drawsize / 2)
+		love.graphics.setColor(0.0, 0.3, 0.3)
+		love.graphics.line(canvasx / 2, 0, canvasx / 2, canvasy)
+		love.graphics.line(0, canvasy / 2, canvasx, canvasy / 2)
+		local ofs = canvasy * 0.15
+		love.graphics.rectangle("line", ofs, ofs, canvasx - ofs * 2, canvasy - ofs * 2)
 
 		--
 		if #frames > 1 then
@@ -137,7 +143,7 @@ function love.draw()
 		-- 	love.graphics.circle("line", p[1], p[2], 5)
 		-- end
 
-		-- local tx, ty = trace(currentFrame, calculateLength(currentFrame) * (mouseX - cx) / drawsize)
+		-- local tx, ty = trace(currentFrame, calculateLength(currentFrame) * (mouseX - cx) / canvasx)
 
 		-- love.graphics.setColor(0, 1, 1)
 		-- love.graphics.circle("line", tx, ty, 7)
@@ -151,21 +157,20 @@ function love.draw()
 
 	love.graphics.setColor(0.4, 0.4, 0.4)
 	love.graphics.setLineWidth(1.0)
-	love.graphics.rectangle("line", 0, 0, drawsize, drawsize)
+	love.graphics.rectangle("line", 0, 0, canvasx, canvasy)
 
 	--------------
 	love.graphics.pop()
 	love.graphics.push()
-	love.graphics.translate(cx * 2 + drawsize, cy)
+	love.graphics.translate(cx, cy * 2 + canvasy)
 
 	-- UI stuff here
 	love.graphics.setColor(1, 1, 1)
 	local s = 20
-	love.graphics.print("fps:\t" .. love.timer.getFPS(), 0, 0)
-	love.graphics.print("length:\t" .. roundTo(calculateLength(currentFrame), 2), 0, s)
-	love.graphics.print("trace speed:\t" .. roundTo(laser.tracespeed, 2), 0, 2 * s)
-	love.graphics.print("frame:\t" .. currentFrame .. "/" .. #frames, 0, 3 * s)
-	love.graphics.print("animation fps:\t" .. framespeed, 0, 4 * s)
+	love.graphics.print("frame:       " .. currentFrame .. "/" .. #frames, 0, 0 * s)
+	love.graphics.print("tool:        " .. tool, 0, 1 * s)
+	love.graphics.print("fps:         " .. framespeed, 0, 2 * s)
+	love.graphics.print("trace speed: " .. roundTo(laser.tracespeed, 2), 0, 3 * s)
 
 	--------------
 	love.graphics.pop()
@@ -178,25 +183,36 @@ function love.keypressed(key, isrepeat)
 		file.export()
 	elseif key == "o" and love.keyboard.isDown("lctrl") then
 		file.openFolder()
+	elseif key == "n" and love.keyboard.isDown("lctrl") then
+		file.new()
+	elseif key == "x" and love.keyboard.isDown("lctrl") then
+		clipboard = deepcopy(frames[currentFrame])
+		removeFrame()
+	elseif key == "c" and love.keyboard.isDown("lctrl") then
+		clipboard = deepcopy(frames[currentFrame])
+	elseif key == "v" and love.keyboard.isDown("lctrl") then
+		-- frames[currentFrame] = deepcopy(clipboard)
+		if clipboard then
+			currentFrame = currentFrame + 1
+			table.insert(frames, currentFrame, deepcopy(clipboard))
+		end
+	elseif key == "delete" then
+		removeFrame()
 	elseif key == "space" then
 		playing = not playing
 	elseif key == "x" then
 		frames[currentFrame] = newFrame()
 	elseif key == "o" then
 		onionSkinning = (onionSkinning + 1) % 3
-		print(onionSkinning)
 	elseif key == "p" then
 		preview = not preview
 	elseif key == "c" then
 		connect = not connect
 	elseif key == "b" then
 		mode = "draw"
-	elseif key == "n" and love.keyboard.isDown("lctrl") then
-		file.new()
 	elseif key == "n" then
 		currentFrame = currentFrame + 1
 		table.insert(frames, currentFrame, newFrame())
-		-- frames[currentFrame] = newFrame()
 	elseif key == "d" then
 		currentFrame = currentFrame + 1
 		if currentFrame > #frames then
@@ -228,14 +244,14 @@ function love.filedropped(f)
 end
 
 function love.mousepressed(x, y, button, istouch)
-	-- if not preview then
-	if mode == "draw" then
-		drawing = true
-		line = {}
-		-- line[0] = { mouseX - cx, mouseY - cy }
-		table.insert(frames[currentFrame].lines, line)
+	if not preview then
+		if tool == "brush" then
+			drawing = true
+			line = {}
+			-- line[0] = { mouseX - cx, mouseY - cy }
+			table.insert(frames[currentFrame].lines, line)
+		end
 	end
-	-- end
 end
 
 function love.mousereleased(x, y, button, istouch, presses)
@@ -372,5 +388,13 @@ function drawFrame(index, onion)
 			-- 	love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
 			-- end
 		end
+	end
+end
+
+function removeFrame()
+	table.remove(frames, currentFrame)
+
+	if currentFrame > #frames then
+		currentFrame = #frames
 	end
 end
