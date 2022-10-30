@@ -19,7 +19,6 @@ function file.export()
 		local length = calculateLength(iframe)
 		for i = 0, file.xres - 1 do
 			local t = (i + 0.5) / file.xres
-			print(t)
 			local gx, gy, alpha = trace(iframe, t * length)
 			outData:setPixel(i, iframe - 1, gx / drawsize, gy / drawsize, alpha, 1)
 		end
@@ -59,6 +58,7 @@ function file.load(f)
 end
 
 function file.new()
+	currentFrame = 1
 	frames = {}
 	frames[1] = newFrame()
 end

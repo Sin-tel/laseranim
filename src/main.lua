@@ -159,6 +159,7 @@ function love.draw()
 	love.graphics.print("length:\t" .. roundTo(calculateLength(currentFrame), 2), 0, s)
 	love.graphics.print("trace speed:\t" .. roundTo(laser.tracespeed, 2), 0, 2 * s)
 	love.graphics.print("frame:\t" .. currentFrame .. "/" .. #frames, 0, 3 * s)
+	love.graphics.print("animation fps:\t" .. framespeed, 0, 4 * s)
 
 	--------------
 	love.graphics.pop()
@@ -175,7 +176,7 @@ function love.keypressed(key, isrepeat)
 		preview = not preview
 	elseif key == "c" then
 		connect = not connect
-	elseif key == "e" then
+	elseif key == "b" then
 		mode = "draw"
 	elseif key == "n" and love.keyboard.isDown("lctrl") then
 		file.new()
@@ -204,6 +205,12 @@ function love.keypressed(key, isrepeat)
 		laser.tracespeed = laser.tracespeed * 1.5
 	elseif key == "s" then
 		laser.tracespeed = laser.tracespeed / 1.5
+	elseif key == "q" then
+		framespeed = framespeed - 6
+		framespeed = math.max(6, framespeed)
+	elseif key == "e" then
+		framespeed = framespeed + 6
+		framespeed = math.min(60, framespeed)
 	end
 end
 
@@ -299,7 +306,6 @@ function trace(index, search)
 
 		n_iter = n_iter + 1
 		if l > search and lPrev < search then
-			print("i: " .. n_iter)
 			local alpha = (search - lPrev) / d
 
 			prev_i = (prev_i + i) % npoints
@@ -326,6 +332,7 @@ end
 
 function drawFrame(index, onion)
 	onion = onion or 0
+
 	nlines = #frames[index].lines
 	for i = 1, nlines do
 		v1 = frames[index].lines[i]
