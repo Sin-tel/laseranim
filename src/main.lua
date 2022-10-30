@@ -351,16 +351,16 @@ function drawFrame(index, onion)
 		for j = 1, #v1 - 1 do
 			love.graphics.line(v1[j][1], v1[j][2], v1[j + 1][1], v1[j + 1][2])
 		end
-		-- if onion == 0 then
-		-- if not connect or i ~= nlines then
-		-- 	love.graphics.setLineWidth(1.0)
-		-- 	love.graphics.setColor(0.2, 0.2, 0.2)
-		-- end
-		-- love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
-
-		if connect and i == nlines then
+		if onion == 0 then
+			if not connect or i ~= nlines then
+				love.graphics.setLineWidth(1.0)
+				love.graphics.setColor(0.2, 0.2, 0.2)
+			end
 			love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
+
+			-- if connect and i == nlines then
+			-- 	love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
+			-- end
 		end
-		-- end
 	end
 end
