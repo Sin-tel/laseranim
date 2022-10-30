@@ -279,9 +279,10 @@ end
 prev_i = 0
 prev_l = 0
 function trace(index, search)
-	-- if #frames[index].points == 0 then
-	-- 	return 0.5, 0.5, 0
-	-- end
+	if #frames[index].points == 0 then
+		return 0.5, 0.5, 0
+	end
+
 	local n_iter = 0
 
 	local l = prev_l

@@ -13,8 +13,8 @@ Animations are exported into an RGB texture and loaded into a TouchDesigner patc
  * A/D: Move between frames
  * W/S: Increase/decrease laser tracing speed
  * E/Q: Increase/decrease fps
- * spacebar: Toggle animation play (in preview mode)
+ * Space: Toggle animation play (in preview mode)
  * P: Toggle laser preview mode
- * N: insert frame
- * X: clear frame
- * O: Cycle onion skinning: 0, 1 or 2 frames
+ * N: Insert frame
+ * X: Clear frame
+ * O: Cycle onion skinning between 0, 1 or 2 frames

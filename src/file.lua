@@ -60,7 +60,9 @@ end
 function file.new()
 	currentFrame = 1
 	frames = {}
-	frames[1] = newFrame()
+	for i = 1, 10 do
+		frames[i] = newFrame()
+	end
 end
 
 function file.openFolder()
