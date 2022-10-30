@@ -36,6 +36,8 @@ currentFrame = 1
 framecounter = 0
 frameblanktimer = 0
 
+onionSkinning = 1
+
 love.window.setMode(width, height, { vsync = true })
 --love.window.setMode(width, height, { vsync = true, fullscreen = false, fullscreentype = "desktop", borderless = false, resizable = true } )
 
@@ -117,10 +119,14 @@ function love.draw()
 
 		--
 		if #frames > 1 then
-			drawFrame((currentFrame - 3) % #frames + 1, -2)
-			drawFrame((currentFrame - 2) % #frames + 1, -1)
-			drawFrame((currentFrame - 0) % #frames + 1, 1)
-			drawFrame((currentFrame + 1) % #frames + 1, 2)
+			if onionSkinning >= 2 then
+				drawFrame((currentFrame - 3) % #frames + 1, -2)
+				drawFrame((currentFrame + 1) % #frames + 1, 2)
+			end
+			if onionSkinning >= 1 then
+				drawFrame((currentFrame - 2) % #frames + 1, -1)
+				drawFrame((currentFrame - 0) % #frames + 1, 1)
+			end
 		end
 		drawFrame(currentFrame, 0)
 
@@ -168,10 +174,17 @@ end
 function love.keypressed(key, isrepeat)
 	if key == "escape" then
 		love.event.quit()
+	elseif key == "s" and love.keyboard.isDown("lctrl") then
+		file.export()
+	elseif key == "o" and love.keyboard.isDown("lctrl") then
+		file.openFolder()
 	elseif key == "space" then
 		playing = not playing
 	elseif key == "x" then
 		frames[currentFrame] = newFrame()
+	elseif key == "o" then
+		onionSkinning = (onionSkinning + 1) % 3
+		print(onionSkinning)
 	elseif key == "p" then
 		preview = not preview
 	elseif key == "c" then
@@ -197,10 +210,6 @@ function love.keypressed(key, isrepeat)
 		if currentFrame == 0 then
 			currentFrame = #frames
 		end
-	elseif key == "s" and love.keyboard.isDown("lctrl") then
-		file.export()
-	elseif key == "o" then
-		file.openFolder()
 	elseif key == "w" then
 		laser.tracespeed = laser.tracespeed * 1.5
 	elseif key == "s" then
