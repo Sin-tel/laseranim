@@ -1,14 +1,15 @@
 require("util")
 require("laser")
 require("file")
+local utf8 = require("utf8")
 
 io.stdout:setvbuf("no")
 
 framespeed = 12 -- fps
 
--- blankspeed = 2 -- speedup during blank lines
-blanktime = 50 -- duration of blank step (pixels)
-frameblank = 0.002 -- duration of blank between frames (seconds)
+blankspeed = 4 -- speedup during blank lines
+-- blanktime = 50 -- duration of blank step (pixels)
+frameblank = 0.0001 -- duration of blank between frames (seconds)
 
 -- window size
 width = 1280
@@ -30,9 +31,10 @@ mouseX, mouseY = 0, 0
 
 frames = {}
 
-playing = true
-preview = false
+playing = false
+animate = true
 connect = false
+debug = false
 
 tool = "brush"
 
@@ -57,26 +59,31 @@ function love.load()
 	love.graphics.setLineStyle("smooth")
 
 	love.graphics.setLineJoin("none")
+	love.keyboard.setKeyRepeat(true)
 
 	-- frames[1] = newFrame()
 	file.loadLast()
 end
 
 function love.update(dt)
-	if playing and preview then
-		framecounter = framecounter + framespeed * dt
+	if playing then
+		if animate then
+			framecounter = framecounter + framespeed * dt
 
-		if framecounter > 1 then
-			framecounter = 0
+			if framecounter > 1 then
+				framecounter = 0
 
-			prev_i = 0
-			prev_l = 0
-			frameblanktimer = frameblank
+				prev_i = 0
+				prev_l = 0
+				frameblanktimer = frameblank
 
-			currentFrame = currentFrame + 1
-			if currentFrame > #frames then
-				currentFrame = 1
+				laser.frame = laser.frame + 1
+				if laser.frame > #frames then
+					laser.frame = 1
+				end
 			end
+		else
+			laser.frame = currentFrame
 		end
 	end
 
@@ -84,16 +91,33 @@ function love.update(dt)
 	mouseX, mouseY = love.mouse.getPosition()
 
 	px, py = mouseX - cx, mouseY - cy
+	px = clamp(px, 0, canvasx)
+	py = clamp(py, 0, canvasy)
 
 	if drawing then
-		if #line == 0 then
-			table.insert(line, { px, py })
-		else
-			local lastx, lasty = line[#line][1], line[#line][2]
-			if dist(lastx, lasty, px, py) > 5 then
+		if love.mouse.isDown(1) then
+			if #line == 0 then
 				table.insert(line, { px, py })
+			else
+				local lastx, lasty = line[#line][1], line[#line][2]
+				if dist(lastx, lasty, px, py) > 5 then
+					table.insert(line, { px, py })
+				end
+			end
+		elseif love.mouse.isDown(2) then
+			if #line == 0 then
+				table.insert(line, { px, py })
+			else
+				local lastx, lasty = line[1][1], line[1][2]
+				if dist(lastx, lasty, px, py) > 5 then
+					line[2] = { px, py }
+				end
 			end
 		end
+	else
+		-- if love.keyboard.isDown("m") then
+		optimizeFrame(currentFrame)
+		-- end
 	end
 end
 
@@ -102,7 +126,7 @@ function love.draw()
 
 	love.graphics.setCanvas(lasercanvas)
 
-	if preview then
+	if playing then
 		love.graphics.setColor(0, 0, 0, 0.6)
 		love.graphics.rectangle("fill", 0, 0, canvasx, canvasy)
 		love.graphics.setBlendMode("add")
@@ -143,10 +167,12 @@ function love.draw()
 		-- 	love.graphics.circle("line", p[1], p[2], 5)
 		-- end
 
-		-- local tx, ty = trace(currentFrame, calculateLength(currentFrame) * (mouseX - cx) / canvasx)
+		if debug then
+			local tx, ty = trace(currentFrame, calculateLength(currentFrame) * (mouseX - cx) / canvasx)
 
-		-- love.graphics.setColor(0, 1, 1)
-		-- love.graphics.circle("line", tx, ty, 7)
+			love.graphics.setColor(0, 1, 1)
+			love.graphics.circle("line", tx, ty, 7)
+		end
 	end
 
 	love.graphics.setCanvas()
@@ -172,11 +198,41 @@ function love.draw()
 	love.graphics.print("fps:         " .. framespeed, 0, 2 * s)
 	love.graphics.print("trace speed: " .. roundTo(laser.tracespeed, 2), 0, 3 * s)
 
+	if renaming then
+		love.graphics.setColor(1, 1, 0)
+	end
+	love.graphics.print("name:        " .. fileName, 0, 4 * s)
+
 	--------------
 	love.graphics.pop()
 end
 
+function love.textinput(t)
+	if renaming then
+		fileName = fileName .. t
+	end
+end
+
 function love.keypressed(key, isrepeat)
+	if renaming then
+		if key == "backspace" then
+			-- get the byte offset to the last UTF-8 character in the string.
+			local byteoffset = utf8.offset(fileName, -1)
+
+			if byteoffset then
+				-- remove the last UTF-8 character.
+				-- string.sub operates on bytes rather than UTF-8 characters, so we couldn't do string.sub(fileName, 1, -2).
+				fileName = string.sub(fileName, 1, byteoffset - 1)
+			end
+		elseif key == "escape" or key == "return" then
+			if fileName:len() == 0 then
+				fileName = file.getRandomName()
+			end
+			renaming = false
+		end
+		return
+	end
+
 	if key == "escape" then
 		love.event.quit()
 	elseif key == "s" and love.keyboard.isDown("lctrl") then
@@ -190,6 +246,8 @@ function love.keypressed(key, isrepeat)
 		removeFrame()
 	elseif key == "c" and love.keyboard.isDown("lctrl") then
 		clipboard = deepcopy(frames[currentFrame])
+	elseif key == "r" and love.keyboard.isDown("lctrl") then
+		renaming = true
 	elseif key == "v" and love.keyboard.isDown("lctrl") then
 		-- frames[currentFrame] = deepcopy(clipboard)
 		if clipboard then
@@ -200,12 +258,15 @@ function love.keypressed(key, isrepeat)
 		removeFrame()
 	elseif key == "space" then
 		playing = not playing
+		laser.frame = currentFrame
+	elseif key == "p" then
+		animate = not animate
 	elseif key == "x" then
 		frames[currentFrame] = newFrame()
 	elseif key == "o" then
 		onionSkinning = (onionSkinning + 1) % 3
-	elseif key == "p" then
-		preview = not preview
+	elseif key == "i" then
+		debug = not debug
 	elseif key == "c" then
 		connect = not connect
 	elseif key == "b" then
@@ -218,9 +279,6 @@ function love.keypressed(key, isrepeat)
 		if currentFrame > #frames then
 			currentFrame = 1
 		end
-		-- if not frames[currentFrame] then
-		-- 	frames[currentFrame] = newFrame()
-		-- end
 	elseif key == "a" then
 		currentFrame = currentFrame - 1
 		if currentFrame == 0 then
@@ -244,12 +302,14 @@ function love.filedropped(f)
 end
 
 function love.mousepressed(x, y, button, istouch)
-	if not preview then
-		if tool == "brush" then
-			drawing = true
-			line = {}
-			-- line[0] = { mouseX - cx, mouseY - cy }
-			table.insert(frames[currentFrame].lines, line)
+	if not playing then
+		if x >= cx and x <= canvasx + cx and y >= cy and y <= canvasy + cy then
+			if tool == "brush" then
+				drawing = true
+				line = {}
+				-- line[0] = { mouseX - cx, mouseY - cy }
+				table.insert(frames[currentFrame].lines, line)
+			end
 		end
 	end
 end
@@ -269,8 +329,8 @@ function calculateLength(index)
 		v2 = frames[index].points[i % npoints + 1]
 
 		if v1[3] == 0 and not (connect and i == npoints) then
-			-- l = l + dist(v1[1], v1[2], v2[1], v2[2]) / blankspeed
-			l = l + blanktime
+			l = l + dist(v1[1], v1[2], v2[1], v2[2]) / blankspeed
+			-- l = l + blanktime
 		else
 			l = l + dist(v1[1], v1[2], v2[1], v2[2])
 		end
@@ -304,8 +364,6 @@ function trace(index, search)
 	local l = prev_l
 	local npoints = #frames[index].points
 
-	-- print("==========")
-
 	for i = 0, npoints - 1 do
 		v1 = frames[index].points[(prev_i + i) % npoints + 1]
 		v2 = frames[index].points[(prev_i + i + 1) % npoints + 1]
@@ -321,8 +379,8 @@ function trace(index, search)
 		local a = v1[3]
 
 		if v1[3] == 0 and not (connect and (prev_i + i + 1) % npoints == 0) then
-			-- d = dist(v1[1], v1[2], v2[1], v2[2]) / blankspeed
-			d = blanktime
+			d = dist(v1[1], v1[2], v2[1], v2[2]) / blankspeed
+			-- d = blanktime
 		else
 			d = dist(v1[1], v1[2], v2[1], v2[2])
 			a = 1.0
@@ -338,7 +396,7 @@ function trace(index, search)
 
 			prev_l = lPrev
 			if a == 0 then
-				if alpha < 0.5 then
+				if alpha < 0.3 then
 					return v1[1], v1[2], a
 				else
 					return v2[1], v2[2], a
@@ -378,15 +436,17 @@ function drawFrame(index, onion)
 			love.graphics.line(v1[j][1], v1[j][2], v1[j + 1][1], v1[j + 1][2])
 		end
 		if onion == 0 then
-			if not connect or i ~= nlines then
-				love.graphics.setLineWidth(1.0)
-				love.graphics.setColor(0.2, 0.2, 0.2)
+			if debug then
+				if not connect or i ~= nlines then
+					love.graphics.setLineWidth(1.0)
+					love.graphics.setColor(0.2, 0.2, 0.2)
+				end
+				love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
+			else
+				if connect and i == nlines then
+					love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
+				end
 			end
-			love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
-
-			-- if connect and i == nlines then
-			-- 	love.graphics.line(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
-			-- end
 		end
 	end
 end
@@ -396,5 +456,41 @@ function removeFrame()
 
 	if currentFrame > #frames then
 		currentFrame = #frames
+	end
+end
+
+function getBlankLength(lines)
+	local d = 0
+	nlines = #lines
+	for i = 1, nlines do
+		v1 = lines[i]
+		v2 = lines[i % nlines + 1]
+		d = d + dist(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
+	end
+
+	return d
+end
+
+function optimizeFrame(index)
+	previousLength = getBlankLength(frames[index].lines)
+
+	for k = 1, 10 do
+		newLines = (deepcopy(frames[index].lines))
+		shuffle(newLines)
+
+		for _, line in ipairs(newLines) do
+			if math.random() < 0.1 then
+				reverse(line)
+			end
+		end
+
+		newLength = getBlankLength(newLines)
+
+		if newLength < previousLength then
+			-- print(newLength, previousLength)
+			previousLength = newLength
+			frames[index].lines = deepcopy(newLines)
+			updatePoints()
+		end
 	end
 end

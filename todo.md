@@ -1,9 +1,10 @@
- * [ ] Straight line tool
- * [ ] Drag tool
  * [x] Copy/paste frames
+ * [x] Make file naming easier
+ * [x] Straight line tool
+ * [ ] Drag tool
  * [ ] Smooth grab
- * [ ] Fix connected lines
+ * [ ] Fix closed shapes
  * [ ] Erase tool
  * [ ] Undo/redo
-
+ * [ ] Input smoothing
 

@@ -3,9 +3,9 @@ laser = {}
 laser.width = 3.0
 laser.color = { 1.0, 0.3, 0.3 }
 
-laser.movespeed = 30000 -- tau timeconstant
+laser.movespeed = 40000 -- tau timeconstant
 laser.iterations = 5000 -- steps per frame in simulation
-laser.tracespeed = 50 -- full laser draws per second
+laser.tracespeed = 40 -- full laser draws per second
 -------------
 laser.x = 0
 laser.y = 0
@@ -16,6 +16,8 @@ laser.vy = 0
 
 laser.t = 0
 
+laser.frame = 1
+
 function laser.draw(fr)
 	local dt = 1 / (60 * laser.iterations)
 	local tau = laser.movespeed
@@ -24,7 +26,7 @@ function laser.draw(fr)
 
 	love.graphics.setLineWidth(laser.width)
 
-	local length = calculateLength(currentFrame)
+	local length = calculateLength(laser.frame)
 
 	for i = 1, laser.iterations do
 		local prevx, prevy = laser.x, laser.y
@@ -32,7 +34,7 @@ function laser.draw(fr)
 		laser.t = laser.t + speed * dt
 		laser.t = laser.t % 1
 
-		local gx, gy, alpha = trace(currentFrame, laser.t * length)
+		local gx, gy, alpha = trace(laser.frame, laser.t * length)
 
 		if frameblanktimer > 0 then
 			frameblanktimer = frameblanktimer - dt

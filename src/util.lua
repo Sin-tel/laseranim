@@ -39,3 +39,23 @@ function deepcopy(orig, copies)
 	end
 	return copy
 end
+
+function shuffle(x)
+	-- for i = #x, 2, -1 do
+	-- 	local j = math.random(i)
+	-- 	x[i], x[j] = x[j], x[i]
+	-- end
+	for k = 1, math.random(3) do
+		local i = math.random(#x)
+		local j = math.random(#x)
+		x[i], x[j] = x[j], x[i]
+	end
+end
+
+function reverse(x)
+	local n, m = #x, #x / 2
+	for i = 1, m do
+		x[i], x[n - i + 1] = x[n - i + 1], x[i]
+	end
+	return x
+end
