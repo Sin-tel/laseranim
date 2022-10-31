@@ -45,7 +45,7 @@ frameblanktimer = 0
 
 onionSkinning = 1
 
-love.window.setMode(width, height, { vsync = true, resizable = true })
+love.window.setMode(width, height, { vsync = true, resizable = false })
 --love.window.setMode(width, height, { vsync = true, fullscreen = false, fullscreentype = "desktop", borderless = false, resizable = true } )
 
 lasercanvas = love.graphics.newCanvas(canvasx, canvasy)
@@ -90,12 +90,14 @@ function love.update(dt)
 	pmouseX, pmouseY = mouseX, mouseY
 	mouseX, mouseY = love.mouse.getPosition()
 
+	dx, dy = mouseX - pmouseX, mouseY - pmouseY
+
 	px, py = mouseX - cx, mouseY - cy
 	px = clamp(px, 0, canvasx)
 	py = clamp(py, 0, canvasy)
 
-	if drawing then
-		if love.mouse.isDown(1) then
+	if love.mouse.isDown(1) then
+		if tool == "brush" then
 			if #line == 0 then
 				table.insert(line, { px, py })
 			else
@@ -104,13 +106,30 @@ function love.update(dt)
 					table.insert(line, { px, py })
 				end
 			end
-		elseif love.mouse.isDown(2) then
+		elseif tool == "grab" then
+			if selection then
+				for i, v in ipairs(selection) do
+					v[1] = v[1] + dx
+					v[2] = v[2] + dy
+				end
+			end
+		end
+	elseif love.mouse.isDown(2) then
+		if tool == "brush" then
 			if #line == 0 then
 				table.insert(line, { px, py })
 			else
 				local lastx, lasty = line[1][1], line[1][2]
 				if dist(lastx, lasty, px, py) > 5 then
-					line[2] = { px, py }
+					line[2] = { lerp(lastx, px, 0.5), lerp(lasty, py, 0.5) }
+					line[3] = { px, py }
+				end
+			end
+		elseif tool == "grab" then
+			for _, l in ipairs(frames[currentFrame].lines) do
+				for i, v in ipairs(l) do
+					v[1] = v[1] + dx
+					v[2] = v[2] + dy
 				end
 			end
 		end
@@ -270,7 +289,9 @@ function love.keypressed(key, isrepeat)
 	elseif key == "c" then
 		connect = not connect
 	elseif key == "b" then
-		mode = "draw"
+		tool = "brush"
+	elseif key == "g" then
+		tool = "grab"
 	elseif key == "n" then
 		currentFrame = currentFrame + 1
 		table.insert(frames, currentFrame, newFrame())
@@ -305,20 +326,21 @@ function love.mousepressed(x, y, button, istouch)
 	if not playing then
 		if x >= cx and x <= canvasx + cx and y >= cy and y <= canvasy + cy then
 			if tool == "brush" then
-				drawing = true
 				line = {}
 				-- line[0] = { mouseX - cx, mouseY - cy }
 				table.insert(frames[currentFrame].lines, line)
+			elseif tool == "grab" then
+				if button == 1 then
+					selection = findLine(x - cx, y - cy)
+				end
 			end
 		end
 	end
 end
 
 function love.mousereleased(x, y, button, istouch, presses)
-	if drawing then
-		updatePoints()
-	end
-	drawing = false
+	selection = nil
+	updatePoints()
 end
 
 function calculateLength(index)
@@ -422,7 +444,11 @@ function drawFrame(index, onion)
 		v1 = frames[index].lines[i]
 		v2 = frames[index].lines[i % nlines + 1]
 		if onion == 0 then
-			love.graphics.setColor(0.9, 0.9, 0.9)
+			if v1 == selection then
+				love.graphics.setColor(0.0, 0.9, 0.9)
+			else
+				love.graphics.setColor(0.9, 0.9, 0.9)
+			end
 			love.graphics.setLineWidth(3.0)
 		else
 			if onion < 0 then
@@ -493,4 +519,31 @@ function optimizeFrame(index)
 			updatePoints()
 		end
 	end
+end
+
+function findLine(x, y)
+	local line = nil
+
+	local d = 100
+	nlines = #frames[currentFrame].lines
+	for i, v in ipairs(frames[currentFrame].lines) do
+		newD = distanceToLine(x, y, v)
+		if newD < d then
+			d = newD
+			line = v
+		end
+	end
+
+	return line
+end
+
+function distanceToLine(x, y, line)
+	local d = 100000
+	for i, v in ipairs(line) do
+		newD = dist(x, y, v[1], v[2])
+		if newD < d then
+			d = newD
+		end
+	end
+	return d
 end
