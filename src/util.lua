@@ -41,11 +41,14 @@ function deepcopy(orig, copies)
 end
 
 function shuffle(x)
-	-- for i = #x, 2, -1 do
-	-- 	local j = math.random(i)
-	-- 	x[i], x[j] = x[j], x[i]
-	-- end
-	for k = 1, math.random(3) do
+	for i = #x, 2, -1 do
+		local j = math.random(i)
+		x[i], x[j] = x[j], x[i]
+	end
+end
+
+function partial_shuffle(x)
+	for _ = 1, math.random(3) do
 		local i = math.random(#x)
 		local j = math.random(#x)
 		x[i], x[j] = x[j], x[i]

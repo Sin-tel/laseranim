@@ -1,7 +1,7 @@
 local binser = require("lib/binser")
 local words = require("words")
 
-file = {}
+local file = {}
 
 file.xres = 512
 
@@ -19,12 +19,10 @@ function file.export()
 
 	---- write data
 	local outCanvas = love.graphics.newCanvas(file.xres, #frames)
-	love.graphics.setCanvas(canvas)
-	love.graphics.clear(0, 0, 0)
-	love.graphics.setCanvas()
+
 	local outData = outCanvas:newImageData()
 
-	for iframe, frame in ipairs(frames) do
+	for iframe, _ in ipairs(frames) do
 		local length = calculateLength(iframe)
 		for i = 0, file.xres - 1 do
 			local t = (i + 0.5) / file.xres
@@ -92,10 +90,12 @@ function file.getExtension(f)
 end
 
 function file.getName(f)
-	local folder, name, extension = f:getFilename():match("^(.-)([^\\/]-)%.([^\\/%.]-)%.?$")
+	local _, name, _ = f:getFilename():match("^(.-)([^\\/]-)%.([^\\/%.]-)%.?$")
 	return name
 end
 
 function file.getRandomName()
 	return words.random()
 end
+
+return file

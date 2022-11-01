@@ -1,6 +1,6 @@
 require("util")
-require("laser")
-require("file")
+local laser = require("laser")
+local file = require("file")
 local utf8 = require("utf8")
 
 io.stdout:setvbuf("no")
@@ -40,9 +40,6 @@ tool = "brush"
 
 currentFrame = 1
 
-framecounter = 0
-frameblanktimer = 0
-
 onionSkinning = 1
 
 love.window.setMode(width, height, { vsync = true, resizable = false })
@@ -67,32 +64,15 @@ end
 
 function love.update(dt)
 	if playing then
-		if animate then
-			framecounter = framecounter + framespeed * dt
-
-			if framecounter > 1 then
-				framecounter = 0
-
-				prev_i = 0
-				prev_l = 0
-				frameblanktimer = frameblank
-
-				laser.frame = laser.frame + 1
-				if laser.frame > #frames then
-					laser.frame = 1
-				end
-			end
-		else
-			laser.frame = currentFrame
-		end
+		laser.animate(dt)
 	end
 
 	pmouseX, pmouseY = mouseX, mouseY
 	mouseX, mouseY = love.mouse.getPosition()
 
-	dx, dy = mouseX - pmouseX, mouseY - pmouseY
+	local dx, dy = mouseX - pmouseX, mouseY - pmouseY
 
-	px, py = mouseX - cx, mouseY - cy
+	local px, py = mouseX - cx, mouseY - cy
 	px = clamp(px, 0, canvasx)
 	py = clamp(py, 0, canvasy)
 
@@ -347,8 +327,8 @@ function calculateLength(index)
 	local l = 0
 	local npoints = #frames[index].points
 	for i = 1, npoints do
-		v1 = frames[index].points[i]
-		v2 = frames[index].points[i % npoints + 1]
+		local v1 = frames[index].points[i]
+		local v2 = frames[index].points[i % npoints + 1]
 
 		if v1[3] == 0 and not (connect and i == npoints) then
 			l = l + dist(v1[1], v1[2], v2[1], v2[2]) / blankspeed
@@ -378,7 +358,7 @@ prev_i = 0
 prev_l = 0
 function trace(index, search)
 	if #frames[index].points == 0 then
-		return 0.5, 0.5, 0
+		return canvasx / 2, canvasy / 2, 0
 	end
 
 	local n_iter = 0
@@ -387,8 +367,8 @@ function trace(index, search)
 	local npoints = #frames[index].points
 
 	for i = 0, npoints - 1 do
-		v1 = frames[index].points[(prev_i + i) % npoints + 1]
-		v2 = frames[index].points[(prev_i + i + 1) % npoints + 1]
+		local v1 = frames[index].points[(prev_i + i) % npoints + 1]
+		local v2 = frames[index].points[(prev_i + i + 1) % npoints + 1]
 
 		if (prev_i + i) % npoints == 0 then
 			l = 0
@@ -429,7 +409,7 @@ function trace(index, search)
 		end
 	end
 
-	return 0.5, 0.5, 0
+	return canvasx / 2, canvasy / 2, 0
 end
 
 function newFrame()
@@ -439,10 +419,10 @@ end
 function drawFrame(index, onion)
 	onion = onion or 0
 
-	nlines = #frames[index].lines
+	local nlines = #frames[index].lines
 	for i = 1, nlines do
-		v1 = frames[index].lines[i]
-		v2 = frames[index].lines[i % nlines + 1]
+		local v1 = frames[index].lines[i]
+		local v2 = frames[index].lines[i % nlines + 1]
 		if onion == 0 then
 			if v1 == selection then
 				love.graphics.setColor(0.0, 0.9, 0.9)
@@ -487,10 +467,10 @@ end
 
 function getBlankLength(lines)
 	local d = 0
-	nlines = #lines
+	local nlines = #lines
 	for i = 1, nlines do
-		v1 = lines[i]
-		v2 = lines[i % nlines + 1]
+		local v1 = lines[i]
+		local v2 = lines[i % nlines + 1]
 		d = d + dist(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
 	end
 
@@ -498,11 +478,11 @@ function getBlankLength(lines)
 end
 
 function optimizeFrame(index)
-	previousLength = getBlankLength(frames[index].lines)
+	local previousLength = getBlankLength(frames[index].lines)
 
 	for k = 1, 10 do
-		newLines = (deepcopy(frames[index].lines))
-		shuffle(newLines)
+		local newLines = (deepcopy(frames[index].lines))
+		partial_shuffle(newLines)
 
 		for _, line in ipairs(newLines) do
 			if math.random() < 0.1 then
@@ -510,7 +490,7 @@ function optimizeFrame(index)
 			end
 		end
 
-		newLength = getBlankLength(newLines)
+		local newLength = getBlankLength(newLines)
 
 		if newLength < previousLength then
 			-- print(newLength, previousLength)
@@ -523,11 +503,9 @@ end
 
 function findLine(x, y)
 	local line = nil
-
 	local d = 100
-	nlines = #frames[currentFrame].lines
-	for i, v in ipairs(frames[currentFrame].lines) do
-		newD = distanceToLine(x, y, v)
+	for _, v in ipairs(frames[currentFrame].lines) do
+		local newD = distanceToLine(x, y, v)
 		if newD < d then
 			d = newD
 			line = v
@@ -539,8 +517,8 @@ end
 
 function distanceToLine(x, y, line)
 	local d = 100000
-	for i, v in ipairs(line) do
-		newD = dist(x, y, v[1], v[2])
+	for _, v in ipairs(line) do
+		local newD = dist(x, y, v[1], v[2])
 		if newD < d then
 			d = newD
 		end
