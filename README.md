@@ -17,18 +17,19 @@ Animations are exported into an RGB texture and loaded into a TouchDesigner patc
  * X: Clear frame
  * A/D: Move between frames
 
-### Animate
+### Edit
+ * ctrl + Z/Y: Undo/redo
  * Space: Play/pause preview
- * P: Toggle laser animate
+ * P: Toggle laser animation play
  * W/S: Increase/decrease laser tracing speed
- * E/Q: Increase/decrease fps
+ * E/Q: Increase/decrease animation fps
  * O: Cycle onion skinning between 0, 1 or 2 frames
- * C: Toggle drawing closed curves (not really functional right now)
  * I: Toggle debug info
 
 ### Brush tool (B)
  * left mouse: freehand draw
  * right mouse: draw straight lines
+ * C: Toggle drawing closed curves
 
 ### Grab tool (G)
  * left mouse: grab line

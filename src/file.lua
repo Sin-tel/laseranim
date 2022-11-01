@@ -13,7 +13,6 @@ function file.export()
 		newName = name .. "_" .. number
 		number = number + 1
 	end
-	print("saving: " .. newName)
 
 	fileName = newName
 
@@ -37,6 +36,8 @@ function file.export()
 	love.filesystem.write(fileName .. ".png", fileData)
 	love.filesystem.write(fileName .. ".sav", binser.serialize(frames))
 	love.filesystem.write("last.txt", fileName .. ".sav")
+
+	printLog("saved: " .. fileName)
 end
 
 function file.loadLast()
@@ -50,7 +51,7 @@ function file.loadLast()
 	else
 		love.filesystem.write("last.txt", "a")
 	end
-	print("no last save found")
+	printLog("no last save found!")
 	file.new()
 end
 
@@ -69,7 +70,7 @@ function file.load(f)
 	end
 
 	fileName = file.getName(f)
-	print("loaded save: " .. fileName)
+	printLog("loaded save: " .. fileName)
 end
 
 function file.new()
@@ -79,6 +80,7 @@ function file.new()
 	for i = 1, 1 do
 		frames[i] = newFrame()
 	end
+	printLog("New file: " .. fileName)
 end
 
 function file.openFolder()
