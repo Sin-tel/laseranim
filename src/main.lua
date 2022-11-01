@@ -219,7 +219,7 @@ function love.draw()
 	love.graphics.print("name:        " .. fileName, 0, 4 * s)
 
 	if logTimer > 0 then
-		love.graphics.setColor(1, 1, 1, logTimer / 3)
+		love.graphics.setColor(1, 1, 1, logTimer)
 
 		love.graphics.print(log, 0, 6 * s)
 	end
@@ -352,7 +352,7 @@ function love.mousepressed(x, y, button, istouch)
 end
 
 function love.mousereleased(x, y, button, istouch, presses)
-	if drawing and drawClosed then
+	if drawing and drawClosed and button == 1 then
 		local xx, yy = line[1][1], line[1][2]
 		table.insert(line, { xx, yy })
 	end
@@ -494,10 +494,14 @@ function drawFrame(index, onion)
 end
 
 function removeFrame()
-	table.remove(frames, currentFrame)
+	if #frames > 1 then
+		table.remove(frames, currentFrame)
 
-	if currentFrame > #frames then
-		currentFrame = #frames
+		if currentFrame > #frames then
+			currentFrame = #frames
+		end
+	else
+		printLog("Error: there must be at least one frame!")
 	end
 end
 

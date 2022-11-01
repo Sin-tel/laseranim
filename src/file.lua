@@ -51,8 +51,8 @@ function file.loadLast()
 	else
 		love.filesystem.write("last.txt", "a")
 	end
-	printLog("no last save found!")
 	file.new()
+	printLog("No last save found!")
 end
 
 function file.load(f)
