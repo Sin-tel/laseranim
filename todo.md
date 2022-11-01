@@ -3,8 +3,8 @@
  * [x] Straight line tool
  * [x] Drag tool
  * [ ] Smooth grab
- * [ ] Fix closed shapes
+ * [x] Fix closed shapes
  * [ ] Erase tool
- * [ ] Undo/redo
+ * [x] Undo/redo
  * [ ] Input smoothing
 
