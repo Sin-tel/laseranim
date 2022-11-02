@@ -1,6 +1,20 @@
 -- std = {
 --    globals = { "love" },
---    read_globals = { "print", "math", "os", "require", "io", "table", "ipairs", "pairs", "setmetatable", "next" },
+--    read_globals = {
+--       "print",
+--       "math",
+--       "os",
+--       "require",
+--       "io",
+--       "table",
+--       "ipairs",
+--       "pairs",
+--       "setmetatable",
+--       "getmetatable",
+--       "next",
+--       "type",
+--       "string",
+--    },
 -- }
 
 std = {

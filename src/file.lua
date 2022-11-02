@@ -57,29 +57,49 @@ function File.loadLast()
 end
 
 function File.load(f)
-	if File.getExtension(f) == ".sav" then
+	local extension = File.getExtension(f)
+	if extension == ".sav" then
 		f:open("r")
 		local data = f:read()
 		frames = binser.deserialize(data)[1]
 
+		for i = 1, #frames do
+			bgImages[i] = {}
+		end
+
 		frameIndex = 1
-	elseif File.getExtension(f) == ".png" then
-		-- todo also read textures
+		fileName = File.getName(f)
+		printLog("Loaded save: " .. fileName)
+	elseif extension == ".png" or extension == ".jpg" then
+		bgImages[frameIndex] = File.newImage(f)
 		return
 	else
+		printLog("Unsupported file!")
 		return
 	end
+end
 
-	fileName = File.getName(f)
-	printLog("loaded save: " .. fileName)
+function File.newImage(f)
+	local new = {}
+	new.image = love.graphics.newImage(f)
+	new.x = canvas.x / 2
+	new.y = canvas.y / 2
+
+	local w, h = new.image:getDimensions()
+
+	new.s = math.min(canvas.x / w, canvas.y / h) * 0.8
+
+	return new
 end
 
 function File.new()
 	fileName = File.getRandomName()
 	frameIndex = 1
+	bgImages = {}
 	frames = {}
 	for i = 1, 1 do
 		frames[i] = Frame.new()
+		bgImages[i] = {}
 	end
 	printLog("New file: " .. fileName)
 end
@@ -89,7 +109,7 @@ function File.openFolder()
 end
 
 function File.getExtension(f)
-	return f:getFilename():match("^.+(%..+)$")
+	return f:getFilename():match("^.+(%..+)$"):lower()
 end
 
 function File.getName(f)

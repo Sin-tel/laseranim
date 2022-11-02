@@ -23,11 +23,14 @@ frameIndex = 1
 fileName = ""
 debug = false
 
+bgImages = {}
+
 local cx = (width - canvas.x) / 2
 local cy = cx
 
 local pmouseX, pmouseY = 0, 0
 local mouseX, mouseY = 0, 0
+local drawx, drawy = 0, 0
 
 local previewLaser = false
 local drawClosed = false
@@ -36,6 +39,8 @@ local drawing = false
 
 local onionSkinning = 1
 local tool = "brush"
+
+local brushSmooth = 5
 
 local clipboard = nil
 local line = {}
@@ -49,6 +54,7 @@ local lasercanvas = love.graphics.newCanvas(canvas.x, canvas.y)
 local function removeFrame()
 	if #frames > 1 then
 		table.remove(frames, frameIndex)
+		table.remove(bgImages, frameIndex)
 
 		if frameIndex > #frames then
 			frameIndex = #frames
@@ -60,6 +66,16 @@ end
 
 local function insertFrame(f)
 	table.insert(frames, frameIndex, f)
+	table.insert(bgImages, frameIndex, {})
+end
+
+local function getImage()
+	for i = 1, #frames do
+		local img = bgImages[(frameIndex - i) % #frames + 1]
+		if img.image then
+			return img
+		end
+	end
 end
 
 function love.load()
@@ -81,58 +97,78 @@ end
 function love.update(dt)
 	if previewLaser then
 		Laser.animate(dt)
-	end
-
-	logTimer = logTimer - dt
-
-	pmouseX, pmouseY = mouseX, mouseY
-	mouseX, mouseY = love.mouse.getPosition()
-
-	local dx, dy = mouseX - pmouseX, mouseY - pmouseY
-
-	local px, py = mouseX - cx, mouseY - cy
-	px = Util.clamp(px, 0, canvas.x)
-	py = Util.clamp(py, 0, canvas.y)
-
-	if love.mouse.isDown(1) then
-		if tool == "brush" then
-			if #line == 0 then
-				table.insert(line, { px, py })
-			else
-				local lastx, lasty = line[#line][1], line[#line][2]
-				if Util.dist(lastx, lasty, px, py) > 5 then
-					table.insert(line, { px, py })
-				end
-			end
-		elseif tool == "grab" then
-			if selection then
-				for _, v in ipairs(selection) do
-					v[1] = v[1] + dx
-					v[2] = v[2] + dy
-				end
-			end
-		end
-	elseif love.mouse.isDown(2) then
-		if tool == "brush" then
-			if #line == 0 then
-				table.insert(line, { px, py })
-			else
-				local lastx, lasty = line[1][1], line[1][2]
-				if Util.dist(lastx, lasty, px, py) > 5 then
-					line[2] = { Util.lerp(lastx, px, 0.5), Util.lerp(lasty, py, 0.5) }
-					line[3] = { px, py }
-				end
-			end
-		elseif tool == "grab" then
-			for _, l in ipairs(frames[frameIndex].lines) do
-				for _, v in ipairs(l) do
-					v[1] = v[1] + dx
-					v[2] = v[2] + dy
-				end
-			end
-		end
 	else
-		Frame.optimize(frames[frameIndex])
+		logTimer = logTimer - dt
+
+		pmouseX, pmouseY = mouseX, mouseY
+		mouseX, mouseY = love.mouse.getPosition()
+
+		local dx, dy = mouseX - pmouseX, mouseY - pmouseY
+
+		local px, py = mouseX - cx, mouseY - cy
+		px = Util.clamp(px, 0, canvas.x)
+		py = Util.clamp(py, 0, canvas.y)
+
+		if love.mouse.isDown(1) then
+			if tool == "brush" then
+				if #line == 0 then
+					table.insert(line, { px, py })
+				else
+					local d = Util.dist(drawx, drawy, px, py)
+					if d > brushSmooth then
+						local md = d - brushSmooth
+						local xx, yy = (px - drawx) / d, (py - drawy) / d
+						drawx = drawx + xx * md
+						drawy = drawy + yy * md
+					end
+
+					local lastx, lasty = line[#line][1], line[#line][2]
+					if Util.dist(lastx, lasty, drawx, drawy) > 3 then
+						table.insert(line, { drawx, drawy })
+					end
+				end
+			elseif tool == "grab" then
+				if selection then
+					for _, v in ipairs(selection) do
+						v[1] = v[1] + dx
+						v[2] = v[2] + dy
+					end
+				end
+			elseif tool == "image" then
+				local img = getImage()
+				if img then
+					img.x = img.x + dx
+					img.y = img.y + dy
+				end
+			end
+		elseif love.mouse.isDown(2) then
+			if tool == "brush" then
+				if #line == 0 then
+					table.insert(line, { px, py })
+				else
+					local lastx, lasty = line[1][1], line[1][2]
+					if Util.dist(lastx, lasty, px, py) > 5 then
+						line[2] = { Util.lerp(lastx, px, 0.5), Util.lerp(lasty, py, 0.5) }
+						line[3] = { px, py }
+					end
+				end
+			elseif tool == "grab" then
+				for _, l in ipairs(frames[frameIndex].lines) do
+					for _, v in ipairs(l) do
+						v[1] = v[1] + dx
+						v[2] = v[2] + dy
+					end
+				end
+			elseif tool == "image" then
+				local img = getImage()
+				if img then
+					img.s = img.s * math.exp(dx / 300)
+				end
+			end
+		else
+			drawx, drawy = px, py
+			Frame.optimize(frames[frameIndex])
+		end
 	end
 end
 
@@ -152,6 +188,15 @@ function love.draw()
 	else
 		love.graphics.setColor(0, 0, 0, 1)
 		love.graphics.rectangle("fill", 0, 0, canvas.x, canvas.y)
+
+		local img = getImage()
+
+		if img then
+			local w, h = img.image:getDimensions()
+			love.graphics.setColor(1, 1, 1, 0.3)
+
+			love.graphics.draw(img.image, img.x - (w * img.s) / 2, img.y - (h * img.s) / 2, 0, img.s)
+		end
 
 		-- grid
 		love.graphics.setLineWidth(1.0)
@@ -174,20 +219,19 @@ function love.draw()
 		end
 		Frame.draw(frames[frameIndex], 0)
 
-		-- debug
-		-- love.graphics.setLineWidth(1.0)
-		-- for _, p in ipairs(frames[frameIndex].points) do
-		-- 	love.graphics.setColor(p[3], 1, 0)
-		-- 	love.graphics.circle("line", p[1], p[2], 5)
-		-- end
-
-		if debug then
-			local tx, ty =
-				Frame.trace(frames[frameIndex], Frame.getLength(frames[frameIndex]) * (mouseX - cx) / canvas.x)
-
-			love.graphics.setColor(0, 1, 1)
-			love.graphics.circle("line", tx, ty, 7)
+		if love.mouse.isDown(1) and tool == "brush" then
+			love.graphics.setLineWidth(1.0)
+			love.graphics.setColor(0.3, 0.3, 0.3)
+			love.graphics.circle("line", drawx, drawy, brushSmooth)
 		end
+
+		-- if debug then
+		-- 	local tx, ty =
+		-- 		Frame.trace(frames[frameIndex], Frame.getLength(frames[frameIndex]) * (mouseX - cx) / canvas.x)
+
+		-- 	love.graphics.setColor(0, 1, 1)
+		-- 	love.graphics.circle("line", tx, ty, 7)
+		-- end
 	end
 
 	love.graphics.setCanvas()
@@ -201,11 +245,11 @@ function love.draw()
 	love.graphics.rectangle("line", 0, 0, canvas.x, canvas.y)
 
 	love.graphics.pop()
-	--------------
+	-------------------
 	love.graphics.push()
 	love.graphics.translate(cx, cy * 2 + canvas.y)
 
-	-- UI stuff here
+	-- UI stuff here --
 	love.graphics.setColor(1, 1, 1)
 	local s = 20
 	love.graphics.print("frame:       " .. frameIndex .. "/" .. #frames, 0, 0 * s)
@@ -216,19 +260,18 @@ function love.draw()
 	love.graphics.print("tool:        " .. tooltext, 0, 1 * s)
 	love.graphics.print("fps:         " .. Laser.framespeed, 0, 2 * s)
 	love.graphics.print("trace speed: " .. Util.roundTo(Laser.tracespeed, 2), 0, 3 * s)
-
+	love.graphics.print("smoothing:   " .. brushSmooth, 0, 4 * s)
 	if renaming then
 		love.graphics.setColor(1, 1, 0)
 	end
-	love.graphics.print("name:        " .. fileName, 0, 4 * s)
+	love.graphics.print("filename:    " .. fileName, 0, 5 * s)
 
 	if logTimer > 0 then
 		love.graphics.setColor(1, 1, 1, logTimer)
 
-		love.graphics.print(log, 0, 6 * s)
+		love.graphics.print(log, 0, 7 * s)
 	end
 
-	--------------
 	love.graphics.pop()
 end
 
@@ -286,6 +329,8 @@ function love.keypressed(key)
 		Undo.undo()
 	elseif key == "y" and love.keyboard.isDown("lctrl") then
 		Undo.redo()
+	elseif key == "i" and love.keyboard.isDown("lctrl") then
+		debug = not debug
 	elseif key == "delete" then
 		removeFrame()
 		Undo.register()
@@ -293,20 +338,20 @@ function love.keypressed(key)
 		previewLaser = not previewLaser
 		Laser.Frame = frameIndex
 	elseif key == "p" then
-		Laser.animate = not Laser.animate
+		Laser.playing = not Laser.playing
 	elseif key == "x" then
 		frames[frameIndex] = Frame.new()
 		Undo.register()
 	elseif key == "o" then
 		onionSkinning = (onionSkinning + 1) % 3
-	elseif key == "i" then
-		debug = not debug
 	elseif key == "c" then
 		drawClosed = not drawClosed
 	elseif key == "b" then
 		tool = "brush"
 	elseif key == "g" then
 		tool = "grab"
+	elseif key == "i" then
+		tool = "image"
 	elseif key == "n" then
 		frameIndex = frameIndex + 1
 		insertFrame(Frame.new())
@@ -331,6 +376,18 @@ function love.keypressed(key)
 	elseif key == "e" then
 		Laser.framespeed = Laser.framespeed + 6
 		Laser.framespeed = math.min(60, Laser.framespeed)
+	elseif key == "m" then
+		brushSmooth = brushSmooth * 2
+		if brushSmooth == 0 then
+			brushSmooth = 5
+		end
+		if brushSmooth > 20 then
+			brushSmooth = 0
+		end
+	elseif key == "r" then
+		for i = 1, #frames do
+			bgImages[i] = {}
+		end
 	end
 end
 

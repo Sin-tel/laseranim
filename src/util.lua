@@ -17,8 +17,14 @@ function M.roundTo(x, decimals)
 	return math.floor(x * mult + 0.5) / mult
 end
 
-function M.lerp(a, b, alpha)
-	return a * (1 - alpha) + b * alpha
+function M.lerp(a, b, amount)
+	return a + (b - a) * M.clamp(amount, 0, 1)
+end
+
+function M.smooth(a, b, amount)
+	local t = M.clamp(amount, 0, 1)
+	local m = t * t * (3 - 2 * t)
+	return a + (b - a) * m
 end
 
 function M.deepcopy(orig, copies)
