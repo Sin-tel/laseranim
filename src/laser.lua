@@ -1,4 +1,4 @@
-local Frame = require("Frame")
+local Frame = require("frame")
 
 local Laser = {}
 
