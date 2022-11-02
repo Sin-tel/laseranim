@@ -1,17 +1,17 @@
-local words = {}
+local Words = {}
 
 local function firstToUpper(str)
 	return (str:gsub("^%l", string.upper))
 end
 
-function words.random()
+function Words.random()
 	local s = ""
-	s = s .. firstToUpper(words.adjectives[math.random(#words.adjectives)])
-	s = s .. firstToUpper(words.nouns[math.random(#words.nouns)])
+	s = s .. firstToUpper(Words.adjectives[math.random(#Words.adjectives)])
+	s = s .. firstToUpper(Words.nouns[math.random(#Words.nouns)])
 	return s
 end
 
-words.adjectives = {
+Words.adjectives = {
 	"abandoned",
 	"able",
 	"absolute",
@@ -1327,7 +1327,7 @@ words.adjectives = {
 	"zigzag",
 }
 
-words.nouns = {
+Words.nouns = {
 	"ability",
 	"abuse",
 	"access",
@@ -2814,4 +2814,4 @@ words.nouns = {
 	"zone",
 }
 
-return words
+return Words

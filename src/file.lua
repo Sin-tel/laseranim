@@ -1,11 +1,12 @@
 local binser = require("lib/binser")
-local words = require("words")
+local Words = require("words")
+local Frame = require("frame")
 
-local file = {}
+local File = {}
 
-file.xres = 512
+File.xres = 512
 
-function file.export()
+function File.export()
 	local name = fileName:match("([^_]+)")
 	local newName = name
 	local number = 2
@@ -17,16 +18,16 @@ function file.export()
 	fileName = newName
 
 	---- write data
-	local outCanvas = love.graphics.newCanvas(file.xres, #frames)
+	local outCanvas = love.graphics.newCanvas(File.xres, #frames)
 
 	local outData = outCanvas:newImageData()
 
-	for iframe, _ in ipairs(frames) do
-		local length = calculateLength(iframe)
-		for i = 0, file.xres - 1 do
-			local t = (i + 0.5) / file.xres
-			local gx, gy, alpha = trace(iframe, t * length)
-			outData:setPixel(i, iframe - 1, gx / canvasx, gy / canvasy, alpha, 1)
+	for iframe, f in ipairs(frames) do
+		local length = Frame.getLength(f)
+		for i = 0, File.xres - 1 do
+			local t = (i + 0.5) / File.xres
+			local gx, gy, alpha = Frame.trace(f, t * length)
+			outData:setPixel(i, iframe - 1, gx / canvas.x, gy / canvas.y, alpha, 1)
 		end
 	end
 
@@ -40,64 +41,64 @@ function file.export()
 	printLog("saved: " .. fileName)
 end
 
-function file.loadLast()
+function File.loadLast()
 	if love.filesystem.getInfo("last.txt") then
 		local name = love.filesystem.read("last.txt")
 		if love.filesystem.getInfo(name) then
 			local f = love.filesystem.newFile(name, "r")
-			file.load(f)
+			File.load(f)
 			return
 		end
 	else
 		love.filesystem.write("last.txt", "a")
 	end
-	file.new()
+	File.new()
 	printLog("No last save found!")
 end
 
-function file.load(f)
-	if file.getExtension(f) == ".sav" then
+function File.load(f)
+	if File.getExtension(f) == ".sav" then
 		f:open("r")
 		local data = f:read()
 		frames = binser.deserialize(data)[1]
 
-		currentFrame = 1
-	elseif file.getExtension(f) == ".png" then
+		frameIndex = 1
+	elseif File.getExtension(f) == ".png" then
 		-- todo also read textures
 		return
 	else
 		return
 	end
 
-	fileName = file.getName(f)
+	fileName = File.getName(f)
 	printLog("loaded save: " .. fileName)
 end
 
-function file.new()
-	fileName = file.getRandomName()
-	currentFrame = 1
+function File.new()
+	fileName = File.getRandomName()
+	frameIndex = 1
 	frames = {}
 	for i = 1, 1 do
-		frames[i] = newFrame()
+		frames[i] = Frame.new()
 	end
 	printLog("New file: " .. fileName)
 end
 
-function file.openFolder()
+function File.openFolder()
 	love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
 end
 
-function file.getExtension(f)
+function File.getExtension(f)
 	return f:getFilename():match("^.+(%..+)$")
 end
 
-function file.getName(f)
+function File.getName(f)
 	local _, name, _ = f:getFilename():match("^(.-)([^\\/]-)%.([^\\/%.]-)%.?$")
 	return name
 end
 
-function file.getRandomName()
-	return words.random()
+function File.getRandomName()
+	return Words.random()
 end
 
-return file
+return File

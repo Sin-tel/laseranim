@@ -1,62 +1,64 @@
-local undo = {}
+local Util = require("util")
 
-undo.maxSize = 50
+local Undo = {}
 
-function undo.load()
-	undo.stack = {}
-	undo.index = 0
-	undo.register()
+Undo.maxSize = 50
+
+function Undo.load()
+	Undo.stack = {}
+	Undo.index = 0
+	Undo.register()
 end
 
 -- these should be symmetric -----------
-function undo.get()
+function Undo.get()
 	local t = {}
-	t.currentFrame = currentFrame
-	t.frames = deepcopy(frames)
+	t.frameIndex = frameIndex
+	t.frames = Util.deepcopy(frames)
 	t.fileName = fileName
 	return t
 end
 
-function undo.set(t)
-	currentFrame = t.currentFrame
-	frames = deepcopy(t.frames)
+function Undo.set(t)
+	frameIndex = t.frameIndex
+	frames = Util.deepcopy(t.frames)
 	fileName = t.fileName
 end
 ----------------------------------------
 
-function undo.register()
-	undo.index = undo.index + 1
-	for i = #undo.stack, undo.index, -1 do
-		undo.stack[i] = nil
+function Undo.register()
+	Undo.index = Undo.index + 1
+	for i = #Undo.stack, Undo.index, -1 do
+		Undo.stack[i] = nil
 	end
-	local t = undo.get()
+	local t = Undo.get()
 
-	undo.stack[undo.index] = t
+	Undo.stack[Undo.index] = t
 
-	if #undo.stack > undo.maxSize then
-		table.remove(undo.stack, 1)
-		undo.index = undo.index - 1
-	end
-end
-
-function undo.undo()
-	undo.index = undo.index - 1
-	if undo.index >= 1 then
-		undo.set(undo.stack[undo.index])
-	else
-		undo.index = 1
-		print("nothing to undo!")
+	if #Undo.stack > Undo.maxSize then
+		table.remove(Undo.stack, 1)
+		Undo.index = Undo.index - 1
 	end
 end
 
-function undo.redo()
-	undo.index = undo.index + 1
-	if undo.stack[undo.index] then
-		undo.set(undo.stack[undo.index])
+function Undo.undo()
+	Undo.index = Undo.index - 1
+	if Undo.index >= 1 then
+		Undo.set(Undo.stack[Undo.index])
 	else
-		undo.index = #undo.stack
+		Undo.index = 1
+		print("nothing to Undo!")
+	end
+end
+
+function Undo.redo()
+	Undo.index = Undo.index + 1
+	if Undo.stack[Undo.index] then
+		Undo.set(Undo.stack[Undo.index])
+	else
+		Undo.index = #Undo.stack
 		print("nothing to redo!")
 	end
 end
 
-return undo
+return Undo

@@ -1,6 +1,25 @@
+-- std = {
+--    globals = { "love" },
+--    read_globals = { "print", "math", "os", "require", "io", "table", "ipairs", "pairs", "setmetatable", "next" },
+-- }
+
 std = {
-   globals = { "love" },
-   read_globals = { "print", "math", "os", "require", "io", "table", "ipairs", "pairs", "setmetatable", "next" },
+   globals = { "love", "frames", "frameIndex", "canvas", "printLog", "fileName", "selection", "debug" },
+   read_globals = {
+      "print",
+      "math",
+      "os",
+      "require",
+      "io",
+      "table",
+      "ipairs",
+      "pairs",
+      "setmetatable",
+      "getmetatable",
+      "next",
+      "type",
+      "string",
+   },
 }
 
-ignore = { "113" }
+-- ignore = { "113" }
