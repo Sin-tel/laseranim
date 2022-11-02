@@ -11,7 +11,7 @@ Laser.tracespeed = 40 -- full laser draws per second
 Laser.framespeed = 12 -- fps
 Laser.playing = true
 
-Laser.Frame = 1
+Laser.frame = 1
 -------------
 local x = 0
 local y = 0
@@ -32,17 +32,17 @@ function Laser.draw()
 
 	love.graphics.setLineWidth(Laser.width)
 
-	if Laser.Frame > #frames then
-		Laser.Frame = 1
+	if Laser.frame > #frames then
+		Laser.frame = 1
 	end
 
-	local length = Frame.getLength(frames[Laser.Frame])
+	local length = Frame.getLength(frames[Laser.frame])
 
 	for i = 1, Laser.iterations do
 		t = t + speed * dt
 		t = t % 1
 
-		local gx, gy, alpha = Frame.trace(frames[Laser.Frame], t * length)
+		local gx, gy, alpha = Frame.trace(frames[Laser.frame], t * length)
 
 		if frameblanktimer > 0 then
 			frameblanktimer = frameblanktimer - dt
@@ -83,13 +83,13 @@ function Laser.animate(dt)
 
 			frameblanktimer = frameblank
 
-			Laser.Frame = Laser.Frame + 1
-			if Laser.Frame > #frames then
-				Laser.Frame = 1
+			Laser.frame = Laser.frame + 1
+			if Laser.frame > #frames then
+				Laser.frame = 1
 			end
 		end
 	else
-		Laser.Frame = frameIndex
+		Laser.frame = frameIndex
 	end
 end
 

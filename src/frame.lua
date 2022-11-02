@@ -174,6 +174,7 @@ end
 function Frame.getLength(f)
 	local l = 0
 	local npoints = #f.points
+
 	for i = 1, npoints do
 		local v1 = f.points[i]
 		local v2 = f.points[i % npoints + 1]

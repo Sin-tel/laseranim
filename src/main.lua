@@ -24,6 +24,9 @@ fileName = ""
 debug = false
 
 bgImages = {}
+bgImages.x = canvas.x / 2
+bgImages.y = canvas.y / 2
+bgImages.s = 1
 
 local cx = (width - canvas.x) / 2
 local cy = cx
@@ -137,8 +140,11 @@ function love.update(dt)
 			elseif tool == "image" then
 				local img = getImage()
 				if img then
-					img.x = img.x + dx
-					img.y = img.y + dy
+					-- img.x = img.x + dx
+					-- img.y = img.y + dy
+
+					bgImages.x = bgImages.x + dx
+					bgImages.y = bgImages.y + dy
 				end
 			end
 		elseif love.mouse.isDown(2) then
@@ -162,7 +168,8 @@ function love.update(dt)
 			elseif tool == "image" then
 				local img = getImage()
 				if img then
-					img.s = img.s * math.exp(dx / 300)
+					-- img.s = img.s * math.exp(dx / 300)
+					bgImages.s = bgImages.s * math.exp(dx / 300)
 				end
 			end
 		else
@@ -195,7 +202,10 @@ function love.draw()
 			local w, h = img.image:getDimensions()
 			love.graphics.setColor(1, 1, 1, 0.3)
 
-			love.graphics.draw(img.image, img.x - (w * img.s) / 2, img.y - (h * img.s) / 2, 0, img.s)
+			-- love.graphics.draw(img.image, img.x - (w * img.s) / 2, img.y - (h * img.s) / 2, 0, img.s)
+
+			local scale = img.s * bgImages.s
+			love.graphics.draw(img.image, bgImages.x - (w * scale) / 2, bgImages.y - (h * scale) / 2, 0, scale)
 		end
 
 		-- grid
@@ -225,13 +235,13 @@ function love.draw()
 			love.graphics.circle("line", drawx, drawy, brushSmooth)
 		end
 
-		-- if debug then
-		-- 	local tx, ty =
-		-- 		Frame.trace(frames[frameIndex], Frame.getLength(frames[frameIndex]) * (mouseX - cx) / canvas.x)
+		if debug then
+			local tx, ty =
+				Frame.trace(frames[frameIndex], Frame.getLength(frames[frameIndex]) * (mouseX - cx) / canvas.x)
 
-		-- 	love.graphics.setColor(0, 1, 1)
-		-- 	love.graphics.circle("line", tx, ty, 7)
-		-- end
+			love.graphics.setColor(0, 1, 1)
+			love.graphics.circle("line", tx, ty, 7)
+		end
 	end
 
 	love.graphics.setCanvas()
@@ -284,12 +294,8 @@ end
 function love.keypressed(key)
 	if renaming then
 		if key == "backspace" then
-			-- get the byte offset to the last UTF-8 character in the string.
 			local byteoffset = utf8.offset(fileName, -1)
-
 			if byteoffset then
-				-- remove the last UTF-8 character.
-				-- string.sub operates on bytes rather than UTF-8 characters, so we couldn't do string.sub(fileName, 1, -2).
 				fileName = string.sub(fileName, 1, byteoffset - 1)
 			end
 		elseif key == "escape" or key == "return" then
@@ -336,7 +342,7 @@ function love.keypressed(key)
 		Undo.register()
 	elseif key == "space" then
 		previewLaser = not previewLaser
-		Laser.Frame = frameIndex
+		Laser.frame = frameIndex
 	elseif key == "p" then
 		Laser.playing = not Laser.playing
 	elseif key == "x" then
@@ -418,9 +424,9 @@ function love.mousereleased(x, y, button)
 		table.insert(line, { xx, yy })
 	end
 	drawing = false
-	Undo.register()
 	selection = nil
 	Frame.updatePoints(frames[frameIndex])
+	Undo.register()
 end
 
 function printLog(s)
