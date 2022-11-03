@@ -6,6 +6,8 @@ local File = {}
 
 File.xres = 512
 
+File.supportedImageFormats = { [".png"] = true, [".jpg"] = true, [".jpeg"] = true }
+
 function File.export()
 	local name = fileName:match("([^_]+)")
 	local newName = name
@@ -70,12 +72,38 @@ function File.load(f)
 		frameIndex = 1
 		fileName = File.getName(f)
 		printLog("Loaded save: " .. fileName)
-	elseif extension == ".png" or extension == ".jpg" then
+	elseif File.supportedImageFormats[extension] then
 		bgImages[frameIndex] = File.newImage(f)
 		return
 	else
 		printLog("Unsupported file!")
 		return
+	end
+end
+
+function File.loadFolder(folder)
+	local folderFiles = love.filesystem.getDirectoryItems(folder)
+	table.sort(folderFiles)
+
+	local index = 1
+	for _, v in ipairs(folderFiles) do
+		print(v)
+		local f = folder .. "/" .. v
+		local info = love.filesystem.getInfo(f)
+		if info then
+			if info.type == "file" then
+				local extension = v:match("^.+(%..+)$"):lower()
+				if File.supportedImageFormats[extension] then
+					if frames[index] then
+						bgImages[index] = File.newImage(f)
+					else
+						frames[index] = Frame.new()
+						bgImages[index] = File.newImage(f)
+					end
+					index = index + 1
+				end
+			end
+		end
 	end
 end
 
@@ -92,10 +120,18 @@ function File.newImage(f)
 	return new
 end
 
+function File.newImages()
+	new = {}
+	new.x = canvas.x / 2
+	new.y = canvas.y / 2
+	new.s = 1
+	return new
+end
+
 function File.new()
 	fileName = File.getRandomName()
 	frameIndex = 1
-	bgImages = {}
+	bgImages = File.newImages()
 	frames = {}
 	for i = 1, 1 do
 		frames[i] = Frame.new()
@@ -104,7 +140,7 @@ function File.new()
 	printLog("New file: " .. fileName)
 end
 
-function File.openFolder()
+function File.openSaveFolder()
 	love.system.openURL("file://" .. love.filesystem.getSaveDirectory())
 end
 

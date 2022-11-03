@@ -24,9 +24,6 @@ fileName = ""
 debug = false
 
 bgImages = {}
-bgImages.x = canvas.x / 2
-bgImages.y = canvas.y / 2
-bgImages.s = 1
 
 local cx = (width - canvas.x) / 2
 local cy = cx
@@ -91,6 +88,8 @@ function love.load()
 
 	love.graphics.setLineJoin("none")
 	love.keyboard.setKeyRepeat(true)
+
+	bgImages = File.newImages()
 
 	-- frames[1] = newFrame()
 	File.loadLast()
@@ -203,7 +202,6 @@ function love.draw()
 			love.graphics.setColor(1, 1, 1, 0.3)
 
 			-- love.graphics.draw(img.image, img.x - (w * img.s) / 2, img.y - (h * img.s) / 2, 0, img.s)
-
 			local scale = img.s * bgImages.s
 			love.graphics.draw(img.image, bgImages.x - (w * scale) / 2, bgImages.y - (h * scale) / 2, 0, scale)
 		end
@@ -312,7 +310,7 @@ function love.keypressed(key)
 	elseif key == "s" and love.keyboard.isDown("lctrl") then
 		File.export()
 	elseif key == "o" and love.keyboard.isDown("lctrl") then
-		File.openFolder()
+		File.openSaveFolder()
 	elseif key == "n" and love.keyboard.isDown("lctrl") then
 		File.new()
 		Undo.register()
@@ -402,13 +400,21 @@ function love.filedropped(f)
 	Undo.register()
 end
 
+function love.directorydropped(path)
+	love.filesystem.mount(path, "droppedfolder")
+	File.loadFolder("droppedfolder")
+	love.filesystem.unmount(path)
+end
+
 function love.mousepressed(x, y, button)
 	if not previewLaser then
 		if x >= cx and x <= canvas.x + cx and y >= cy and y <= canvas.y + cy then
 			if tool == "brush" then
-				drawing = true
-				line = {}
-				table.insert(frames[frameIndex].lines, line)
+				if not drawing then
+					drawing = true
+					line = {}
+					table.insert(frames[frameIndex].lines, line)
+				end
 			elseif tool == "grab" then
 				if button == 1 then
 					selection = Frame.findLine(frames[frameIndex], x - cx, y - cy)

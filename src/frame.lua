@@ -55,6 +55,7 @@ local function getBlankLength(lines)
 	for i = 1, nlines do
 		local v1 = lines[i]
 		local v2 = lines[i % nlines + 1]
+
 		d = d + Util.dist(v1[#v1][1], v1[#v1][2], v2[1][1], v2[1][2])
 	end
 
