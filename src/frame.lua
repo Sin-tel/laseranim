@@ -203,8 +203,7 @@ function Frame.updatePoints(f)
 		end
 	end
 
-	prev_i = 0
-	prev_l = 0
+	Frame.resetHeuristics()
 end
 
 return Frame
